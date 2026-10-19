@@ -26,7 +26,8 @@ def call(worker, *args):
 
 def smoke_test(worker):
     with tempfile.TemporaryDirectory(prefix='notchconvert packaged ') as temp:
-        root = Path(temp)
+        # macOS exposes /var through /private/var; compare filesystem locations.
+        root = Path(temp).resolve()
         relocated = root / '변환 도구'
         shutil.copytree(worker.parent, relocated, symlinks=True)
         executable = relocated / worker.name
@@ -53,7 +54,7 @@ def smoke_test(worker):
                         raise RuntimeError('ZIP 원본 보존 확인에 실패했습니다.')
         nearby = call(executable, 'convert', '--format', 'pptx', '--beside-original', source)
         near_path = Path(nearby['outputs'][0])
-        if near_path.parent != source.parent or near_path == source or near_path.read_bytes() != original:
+        if not near_path.parent.samefile(source.parent) or near_path.samefile(source) or near_path.read_bytes() != original:
             raise RuntimeError('원본 옆 저장·중복 이름 보존 확인에 실패했습니다.')
         if source.read_bytes() != original:
             raise RuntimeError('테스트 중 원본이 변경되었습니다.')
