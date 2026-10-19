@@ -1,0 +1,5 @@
+-r ../backend/requirements.txt
+# Reproducible test packaging; codecs tested in the frozen worker smoke check.
+PyMuPDF==1.26.6
+PyInstaller==6.22.3
+pyinstaller-hooks-contrib==2026.8

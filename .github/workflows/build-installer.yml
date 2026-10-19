@@ -1,0 +1,73 @@
+name: Build test installers
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'backend/**'
+      - 'scripts/**'
+      - 'packaging/**'
+      - 'tests/**'
+      - 'Package.swift'
+      - 'VERSION'
+      - '.github/workflows/build-installer.yml' 
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: macOS installer (${{ matrix.chip }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            python_arch: arm64
+            chip: arm64
+          - runner: macos-15-intel
+            python_arch: x64
+            chip: x86_64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: ${{ matrix.python_arch }}
+      - name: Run conversion pipeline tests
+        run: |
+          python3 -m venv .venv-tests
+          .venv-tests/bin/python -m pip install -r tests/requirements.txt
+          .venv-tests/bin/python -m unittest discover -s tests -v
+      - name: Build app and double-click installer
+        run: bash scripts/create-pkg.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NotchConvert-${{ matrix.chip }}-installer
+          path: |
+            dist/*.pkg
+            dist/*.pkg.sha256
+          if-no-files-found: error
+          retention-days: 14
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: NotchConvert-*-installer
+          path: installers
+          merge-multiple: true
+      - name: Publish test download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(cat VERSION)"
+          gh release create "test-${GITHUB_RUN_NUMBER}" installers/*.pkg installers/*.sha256 \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "NotchConvert ${version} test" \
+            --notes "테스트용 설치 파일입니다. Apple Silicon(M1 이후)은 arm64, Intel은 x86_64 파일을 다운로드하세요. 더블클릭 후 설치 안내를 따르세요. Keynote가 필요하며 실제 변환 및 드래그 UI 검증은 진행 중입니다. Apple 공증은 적용되지 않았습니다."

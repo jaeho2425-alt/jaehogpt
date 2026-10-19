@@ -30,23 +30,18 @@
 
 ## 테스트용 설치 파일
 
-배포 방식은 **DMG**입니다. 앱을 응용 프로그램 폴더로 드래그하여 설치합니다. 생성된 앱 안에 Python과 변환 엔진이 포함되므로 테스트 사용자는 **호환 macOS와 Keynote**만 필요합니다.
+[설치 파일 다운로드](https://github.com/jaeho2425-alt/jaehogpt/releases)
 
-현재 환경은 Linux이므로 **실제 Mac 앱과 DMG는 아직 생성하지 못했습니다.** 생성 도구와 검증 절차가 포함되어 있습니다. Mac에서 압축을 풀고 `DMG 만들기.command`를 더블 클릭하거나 다음을 실행하세요.
+테스트용 `.pkg` 설치 파일을 Mac 빌드 서버에서 생성합니다. **코드나 명령어 입력 없이**, 파일을 더블클릭하고 macOS 설치 안내를 따르면 앱이 응용 프로그램 폴더에 설치됩니다. Python이나 Xcode를 설치할 필요가 없습니다.
 
-```bash
-bash scripts/create-dmg.sh
-```
+- Apple Silicon(M1 이후) Mac: `arm64-test.pkg`
+- Intel Mac: `x86_64-test.pkg`
 
-한 번 빌드하는 Mac에는 Python 3.10 이상과 Xcode Command Line Tools가 필요합니다. 빌드 도구는 임시 환경에 설치됩니다. 결과는 `dist/NotchConvert-0.3.0-arm64-test.dmg` 또는 Intel용 `…-x86_64-test.dmg`이며, 이 파일을 다른 테스트 사용자에게 전달합니다. 상세 절차는 `packaging/BUILD-DMG.md`를 확인하세요.
+macOS 13 이상과 Keynote가 필요합니다. 초기 테스트 빌드에는 Apple 공증이 적용되지 않습니다. macOS에서 실행을 차단하면 시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기를 사용해야 할 수 있습니다.
 
-기본 결과물은 ad-hoc 서명된 테스트용 앱이며 Apple 공증은 하지 않습니다. 다운로드한 앱의 실행이 차단되면 시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기를 사용해야 할 수 있습니다.
+Keynote를 한 번 실행해 초기 안내를 완료해 주세요. 앱의 자동화 권한 요청에는 Keynote 제어를 허용해야 합니다. Keynote가 없으면 ZIP과 PPTX 사본 생성만 사용할 수 있습니다.
 
-앱만 빌드하려면 `bash scripts/build-macos.sh`를 실행합니다. 이전 버전과 달리 `~/Library/Application Support/NotchConvert/venv`는 실행에 사용하지 않습니다.
-
-Keynote를 한 번 실행해 초기 안내를 완료해 주세요. 자동화 권한 요청에는 NotchConvert의 Keynote 제어를 허용해야 합니다. 허용하지 않았다면 시스템 설정 → 개인정보 보호 및 보안 → 자동화에서 변경할 수 있습니다. 터미널 검증과 앱 실행은 각각 권한을 요청할 수 있습니다.
-
-Keynote가 없으면 ZIP과 PPTX→PPTX 복사만 표시합니다. 변환 중에는 Keynote가 실행되거나 경고창을 표시할 수 있습니다.
+개발용 빌드는 `scripts/create-pkg.sh`, DMG 생성은 `scripts/create-dmg.sh`에서 처리합니다. 이는 설치 파일을 만드는 개발자용이며 테스트 사용자는 실행할 필요가 없습니다.
 
 ## 원본과 결과
 
