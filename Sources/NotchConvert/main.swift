@@ -191,6 +191,8 @@ struct ConverterView: View {
                 if model.files.isEmpty {
                     Text("Keynote .key · PowerPoint .ppt / .pptx")
                         .font(.system(size: 12)).foregroundStyle(Color.white.opacity(0.52))
+                    Text("파일을 끌면서 Shift 키를 누르면 변환 메뉴가 열립니다.")
+                        .font(.system(size: 11)).foregroundStyle(Color.white.opacity(0.52))
                 } else {
                     Text(model.files.count == 1 ? model.files[0].lastPathComponent :
                             "\(model.files[0].lastPathComponent) 외 \(model.files.count - 1)개")
@@ -360,6 +362,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in self?.checkDrag() }
         poll = timer
         RunLoop.main.add(timer, forMode: .common)
+        openPanel()
+        LaunchWindowCheck.startIfRequested(panel: panel)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // Finder sends a reopen event when the already running app is opened again.
+        guard panel != nil else { return false }
+        openPanel()
+        return false
     }
 
     func screenAtPointer() -> NSScreen? {
@@ -447,6 +458,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         radial.hide()
         dragScreen = screenAtPointer()
         show(expanded: true)
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
     }
 
     func show(expanded: Bool) {

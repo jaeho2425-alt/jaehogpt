@@ -49,20 +49,7 @@ jobs:
           test -x /Applications/NotchConvert.app/Contents/MacOS/NotchConvert
           codesign --verify --deep --strict /Applications/NotchConvert.app
           python3 scripts/check-worker.py /Applications/NotchConvert.app/Contents/Resources/worker/NotchConvertWorker
-          open -g /Applications/NotchConvert.app
-          python3 - <<'PYTEST'
-          import subprocess, time
-          for _ in range(20):
-              if subprocess.run(['pgrep', '-x', 'NotchConvert'], capture_output=True).returncode == 0:
-                  break
-              time.sleep(0.5)
-          else:
-              raise SystemExit('Installed app did not start')
-          time.sleep(2)
-          assert subprocess.run(['pgrep', '-x', 'NotchConvert'], capture_output=True).returncode == 0, 'App exited during startup'
-          print('Installed app started successfully')
-          PYTEST
-          pkill -x NotchConvert
+          python3 scripts/check-app-launch.py /Applications/NotchConvert.app
       - uses: actions/upload-artifact@v4
         with:
           name: NotchConvert-${{ matrix.chip }}-installer
