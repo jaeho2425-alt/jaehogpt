@@ -42,6 +42,27 @@ jobs:
           .venv-tests/bin/python -m unittest discover -s tests -v
       - name: Build app and double-click installer
         run: bash scripts/create-pkg.sh
+      - name: Verify installation and app startup
+        run: |
+          package="$(find dist -maxdepth 1 -name '*.pkg' -print -quit)"
+          sudo /usr/sbin/installer -pkg "$package" -target /
+          test -x /Applications/NotchConvert.app/Contents/MacOS/NotchConvert
+          codesign --verify --deep --strict /Applications/NotchConvert.app
+          python3 scripts/check-worker.py /Applications/NotchConvert.app/Contents/Resources/worker/NotchConvertWorker
+          open -g /Applications/NotchConvert.app
+          python3 - <<'PYTEST'
+          import subprocess, time
+          for _ in range(20):
+              if subprocess.run(['pgrep', '-x', 'NotchConvert'], capture_output=True).returncode == 0:
+                  break
+              time.sleep(0.5)
+          else:
+              raise SystemExit('Installed app did not start')
+          time.sleep(2)
+          assert subprocess.run(['pgrep', '-x', 'NotchConvert'], capture_output=True).returncode == 0, 'App exited during startup'
+          print('Installed app started successfully')
+          PYTEST
+          pkill -x NotchConvert
       - uses: actions/upload-artifact@v4
         with:
           name: NotchConvert-${{ matrix.chip }}-installer
