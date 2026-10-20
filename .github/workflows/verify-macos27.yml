@@ -1,0 +1,54 @@
+name: Verify GUI conversion on macOS 27
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/verify-macos27.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compatibility:
+    runs-on: xcode-27
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: arm64
+      - name: Prepare GUI checker
+        run: |
+          sw_vers
+          uname -m
+          python3 -m venv .venv-check
+          .venv-check/bin/python -m pip install 'python-pptx>=1,<2'
+      - name: Wait for tested package build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh run watch 39369274862 --exit-status --interval 15
+      - uses: actions/download-artifact@v4
+        with:
+          name: NotchConvert-arm64-installer
+          run-id: 39275963892
+          github-token: ${{ github.token }}
+          path: baseline
+      - name: Check previous worker on macOS 27
+        continue-on-error: true
+        run: |
+          sudo /usr/sbin/installer -pkg baseline/NotchConvert-0.3.1-arm64-test.pkg -target /
+          python3 scripts/check-worker.py /Applications/NotchConvert.app/Contents/Resources/worker/NotchConvertWorker
+      - uses: actions/download-artifact@v4
+        with:
+          name: NotchConvert-arm64-installer
+          run-id: 39369274862
+          github-token: ${{ github.token }}
+          path: dist
+      - name: Check installed GUI and worker on macOS 27
+        run: |
+          sudo /usr/sbin/installer -pkg dist/NotchConvert-0.3.2-arm64-test.pkg -target /
+          codesign --verify --deep --strict /Applications/NotchConvert.app
+          python3 scripts/check-worker.py /Applications/NotchConvert.app/Contents/Resources/worker/NotchConvertWorker
+          python3 scripts/check-app-launch.py /Applications/NotchConvert.app
+          .venv-check/bin/python scripts/check-app-conversion.py /Applications/NotchConvert.app
