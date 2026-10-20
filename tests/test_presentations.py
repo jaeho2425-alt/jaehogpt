@@ -190,6 +190,19 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(json.loads(output.getvalue())['ok'])
         self.assertIn('Library warning', errors.getvalue())
 
+    def test_cli_unicode_replies_work_with_ascii_stdio(self):
+        env = os.environ.copy()
+        env.update(PYTHONIOENCODING='ascii', PYTHONUTF8='0', PYTHONCOERCECLOCALE='0', LC_ALL='C')
+        for source in (self.pptx, self.root / '없는 문서.pptx'):
+            result = subprocess.run([sys.executable, c.__file__, 'inspect', str(source)],
+                                    env=env, capture_output=True)
+            # The wire format must survive a GUI process with no UTF-8 locale.
+            self.assertTrue(result.stdout.isascii())
+            reply = json.loads(result.stdout)
+            self.assertEqual(reply['ok'], source.exists(), result.stderr)
+            if source.exists():
+                self.assertEqual(reply['files'][0]['name'], source.name)
+
     def test_frozen_worker_does_not_leak_library_paths_to_keynote(self):
         values = {'DYLD_LIBRARY_PATH': '/bundled/runtime',
                   'DYLD_FALLBACK_LIBRARY_PATH': '/bundled/fallback',

@@ -337,9 +337,10 @@ def main():
                 result = convert_beside_original(paths, args.format)
             else:
                 result = convert(paths, args.format, args.output.resolve())
-        print(json.dumps({'ok': True, **result}, ensure_ascii=False))
+        # ASCII JSON is decoded as Unicode by the app and works without a GUI locale.
+        print(json.dumps({'ok': True, **result}, ensure_ascii=True))
     except Exception as exc:
-        print(json.dumps({'ok': False, 'error': str(exc)}, ensure_ascii=False))
+        print(json.dumps({'ok': False, 'error': str(exc)}, ensure_ascii=True))
         sys.exit(1)
 
 if __name__ == '__main__':

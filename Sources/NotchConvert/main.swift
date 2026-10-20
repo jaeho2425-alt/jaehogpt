@@ -21,6 +21,7 @@ final class ConverterModel: ObservableObject {
     @Published var result: URL?
     @Published var outputs: [URL] = []
     @Published var failed = false
+    @Published var diagnostic = ""
     @Published var inspecting = false
     @Published var destination = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
     var expand: (() -> Void)?
@@ -105,12 +106,14 @@ final class ConverterModel: ObservableObject {
         outputs = []
         result = nil
         failed = false
+        diagnostic = ""
         message = "Keynote 또는 PowerPoint 파일을 추가해 주세요."
     }
 
     private func run(_ arguments: [String], completion: @escaping (WorkerReply) -> Void) {
         busy = true
         failed = false
+        diagnostic = ""
         WorkerClient.request(arguments) { result in
             self.busy = false
             switch result {
@@ -123,6 +126,7 @@ final class ConverterModel: ObservableObject {
             case .failure(let error):
                 self.failed = true
                 self.message = error.localizedDescription
+                self.diagnostic = (error as? WorkerClient.Failure)?.diagnostic ?? "\(error)"
             }
         }
     }
@@ -249,6 +253,12 @@ struct ConverterView: View {
                     .foregroundStyle(Color.white.opacity(model.failed ? 0.9 : 0.5))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }.frame(maxHeight: 42)
+            if !model.diagnostic.isEmpty {
+                Button("문제 정보 복사") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(model.diagnostic, forType: .string)
+                }.buttonStyle(MonoButton())
+            }
             Spacer(minLength: 0)
             Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
             HStack {
@@ -364,6 +374,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         RunLoop.main.add(timer, forMode: .common)
         openPanel()
         LaunchWindowCheck.startIfRequested(panel: panel)
+        AppConversionCheck.startIfRequested(model: model)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
