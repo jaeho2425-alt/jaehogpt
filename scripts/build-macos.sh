@@ -32,6 +32,7 @@ BIN="$(swift build -c release --show-bin-path)"
 # No Python interpreter, venv, or developer tools are needed on the test user's Mac.
 "$PACK_PYTHON" -m PyInstaller --noconfirm --clean --onedir \
   --name NotchConvertWorker --target-arch "$MACHINE_ARCH" \
+  --python-option "X utf8" \
   --collect-all pymupdf \
   --add-data "$ROOT/backend/export-keynote.applescript:." \
   --codesign-identity "$SIGN_IDENTITY" \

@@ -192,7 +192,8 @@ class PipelineTests(unittest.TestCase):
 
     def test_cli_unicode_replies_work_with_ascii_stdio(self):
         env = os.environ.copy()
-        env.update(PYTHONIOENCODING='ascii', PYTHONUTF8='0', PYTHONCOERCECLOCALE='0', LC_ALL='C')
+        # Keep filename decoding in UTF-8 while forcing stdout itself to ASCII.
+        env.update(PYTHONIOENCODING='ascii', PYTHONUTF8='1', PYTHONCOERCECLOCALE='0', LC_ALL='C')
         for source in (self.pptx, self.root / '없는 문서.pptx'):
             result = subprocess.run([sys.executable, c.__file__, 'inspect', str(source)],
                                     env=env, capture_output=True)

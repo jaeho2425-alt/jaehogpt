@@ -28,6 +28,10 @@ enum WorkerClient {
             let process = Process()
             process.executableURL = worker
             process.arguments = arguments
+            var environment = ProcessInfo.processInfo.environment
+            environment["PYTHONUTF8"] = "1"
+            environment["PYTHONIOENCODING"] = "utf-8"
+            process.environment = environment
             let output = Pipe()
             // A file avoids blocking the child when stderr fills while stdout is read.
             let errorURL = FileManager.default.temporaryDirectory.appendingPathComponent("notchconvert-error-\(UUID().uuidString)")
